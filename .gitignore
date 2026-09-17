@@ -1,0 +1,7 @@
+.env
+.venv/
+__pycache__/
+*.pyc
+youtube_state_*.json
+youtube_notifier.log
+cron.log
