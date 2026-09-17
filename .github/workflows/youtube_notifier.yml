@@ -2,8 +2,12 @@ name: YouTube Notifier
 
 on:
   schedule:
-    # Chạy mỗi ngày lúc 09:00 UTC = 16:00 VN
+    # 08:00 VN = 01:00 UTC
+    - cron: '0 1 * * *'
+    # 16:00 VN = 09:00 UTC
     - cron: '0 9 * * *'
+    # 20:00 VN = 13:00 UTC
+    - cron: '0 13 * * *'
   workflow_dispatch:
 
 jobs:
