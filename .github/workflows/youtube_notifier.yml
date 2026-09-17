@@ -1,0 +1,36 @@
+name: YouTube Notifier
+
+on:
+  schedule:
+    # Chạy mỗi ngày lúc 09:00 UTC = 16:00 VN
+    - cron: '0 9 * * *'
+  workflow_dispatch:
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install requests feedparser python-dotenv
+
+      - name: Create .env from secrets
+        run: |
+          cat > .env << ENVEOF
+          TELEGRAM_BOT_TOKEN=${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID=${{ secrets.TELEGRAM_CHAT_ID }}
+          ENVEOF
+
+      - name: Run YouTube notifier
+        run: |
+          python auto_craw_v2.py
