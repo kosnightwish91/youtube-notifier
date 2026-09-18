@@ -1,0 +1,15 @@
+{
+  "codes": [
+    "NVB",
+    "VCB",
+    "HPG",
+    "FPT",
+    "MWG",
+    "VNM",
+    "VIC",
+    "VRE",
+    "TCB",
+    "MSN"
+  ],
+  "max_news_per_code": 10
+}

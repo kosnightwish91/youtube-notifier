@@ -1,0 +1,45 @@
+name: Periodic Stock News
+
+on:
+  schedule:
+    # 09:00 VN = 02:00 UTC
+    - cron: '0 2 * * *'
+    # 16:00 VN = 09:00 UTC
+    - cron: '0 9 * * *'
+  workflow_dispatch:
+
+jobs:
+  send-news:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install requests beautifulsoup4 python-dotenv
+
+      - name: Create .env from secrets
+        run: |
+          cat > .env << ENVEOF
+          STOCK_NEWS_BOT_TOKEN=${{ secrets.STOCK_NEWS_BOT_TOKEN }}
+          STOCK_NEWS_CHAT_ID=${{ secrets.STOCK_NEWS_CHAT_ID }}
+          ENVEOF
+
+      - name: Run periodic stock news
+        run: |
+          python periodic_stock_news.py
+
+      - name: Commit and push updated state
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add stock_news_sent.json
+          git diff --quiet && git diff --staged --quiet || (git commit -m "Update stock news sent list" && git push)
