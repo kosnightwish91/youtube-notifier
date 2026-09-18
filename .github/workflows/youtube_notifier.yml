@@ -2,7 +2,10 @@ name: YouTube Notifier
 
 on:
   schedule:
-    - cron: '*/15 * * * *'
+    # 11:00 Việt Nam = 04:00 UTC
+    - cron: '0 4 * * *'
+    # 18:00 Việt Nam = 11:00 UTC
+    - cron: '0 11 * * *'
   workflow_dispatch:
 
 permissions:
