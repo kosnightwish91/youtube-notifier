@@ -18,3 +18,6 @@ ENV/
 .idea/
 .vscode/
 *.iml
+
+# Local log files
+*.log
