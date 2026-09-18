@@ -2,13 +2,11 @@ name: YouTube Notifier
 
 on:
   schedule:
-    # 08:00 VN = 01:00 UTC
-    - cron: '0 1 * * *'
-    # 16:00 VN = 09:00 UTC
-    - cron: '0 9 * * *'
-    # 20:00 VN = 13:00 UTC
-    - cron: '0 13 * * *'
+    - cron: '*/15 * * * *'
   workflow_dispatch:
+
+permissions:
+  contents: write
 
 jobs:
   notify:
@@ -17,24 +15,41 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-      - name: Set up Python
+      - name: Set up Python with pip cache
         uses: actions/setup-python@v5
         with:
           python-version: '3.12'
+          cache: 'pip'
+          cache-dependency-path: requirements.txt
 
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install requests feedparser python-dotenv
-
-      - name: Create .env from secrets
-        run: |
-          cat > .env << ENVEOF
-          TELEGRAM_BOT_TOKEN=${{ secrets.TELEGRAM_BOT_TOKEN }}
-          TELEGRAM_CHAT_ID=${{ secrets.TELEGRAM_CHAT_ID }}
-          ENVEOF
+          python -m pip install -r requirements.txt
+          python -m pip install feedparser
 
       - name: Run YouTube notifier
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
         run: |
           python auto_craw_v2.py
+
+      - name: Commit and push updated YouTube states
+        run: |
+          git config user.email "action@github.com"
+          git config user.name "GitHub Action"
+
+          git add youtube_state_betterversion.json
+          git add youtube_state_phephim.json
+          git add youtube_state_cdmedia.json
+
+          if git diff --cached --quiet; then
+            echo "No YouTube state changes to commit."
+            exit 0
+          fi
+
+          git commit -m "Update YouTube notifier states"
+          git push "https://${{ secrets.PUSH_TOKEN }}@github.com/${{ github.repository }}.git" HEAD:main
