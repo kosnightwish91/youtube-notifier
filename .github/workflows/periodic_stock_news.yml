@@ -2,11 +2,12 @@ name: Periodic Stock News
 
 on:
   schedule:
-    # 09:00 VN = 02:00 UTC
     - cron: '0 2 * * *'
-    # 16:00 VN = 09:00 UTC
     - cron: '0 9 * * *'
   workflow_dispatch:
+
+permissions:
+  contents: write
 
 jobs:
   send-news:
@@ -15,6 +16,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -26,20 +29,25 @@ jobs:
           python -m pip install --upgrade pip
           pip install requests beautifulsoup4 python-dotenv
 
-      - name: Create .env from secrets
+      - name: Create environment file
         run: |
-          cat > .env << ENVEOF
-          STOCK_NEWS_BOT_TOKEN=${{ secrets.STOCK_NEWS_BOT_TOKEN }}
-          STOCK_NEWS_CHAT_ID=${{ secrets.STOCK_NEWS_CHAT_ID }}
-          ENVEOF
+          printf 'STOCK_NEWS_BOT_TOKEN=%s\nSTOCK_NEWS_CHAT_ID=%s\n' \
+            '${{ secrets.STOCK_NEWS_BOT_TOKEN }}' \
+            '${{ secrets.STOCK_NEWS_CHAT_ID }}' > telebot.env
 
       - name: Run periodic stock news
-        run: |
-          python periodic_stock_news.py
+        run: python periodic_stock_news.py
 
       - name: Commit and push updated state
         run: |
-          git config --local user.email "action@github.com"
-          git config --local user.name "GitHub Action"
+          git config user.email "action@github.com"
+          git config user.name "GitHub Action"
           git add stock_news_sent.json
-          git diff --quiet && git diff --staged --quiet || (git commit -m "Update stock news sent list" && git push)
+
+          if git diff --cached --quiet; then
+            echo "No changes to commit."
+            exit 0
+          fi
+
+          git commit -m "Update stock news sent list"
+          git push "https://${{ secrets.PUSH_TOKEN }}@github.com/${{ github.repository }}.git" HEAD:main
